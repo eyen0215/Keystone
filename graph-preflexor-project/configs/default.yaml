@@ -1,0 +1,24 @@
+# Graph-PReFLexOR Experiment Configuration
+# ==========================================
+
+model:
+  name: "lamm-mit/Graph-Preflexor_01062025"
+  dtype: "bfloat16"
+  # Set to false if flash-attn not installed (auto-fallback in code)
+  use_flash_attention: true
+
+generation:
+  max_new_tokens: 2048
+  temperature: 0.3          # Lower = more deterministic
+  repetition_penalty: 1.1
+  do_sample: true
+
+garden:
+  num_iterations: 20        # Paper uses ~1000. Start small.
+  temperature: 0.5          # Higher than single inference for exploration
+  seed_question: "Discuss an interesting idea in bio-inspired materials science."
+
+# System prompt matches the paper's domain
+system_prompt: "You are a materials scientist."
+
+output_dir: "./outputs"

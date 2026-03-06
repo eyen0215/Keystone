@@ -1,0 +1,22 @@
+# Core ML
+torch>=2.2.0
+transformers>=4.40.0
+accelerate>=0.27.0
+
+# Graph analysis
+networkx>=3.2
+python-louvain>=0.16    # community detection / modularity
+
+# Visualization
+matplotlib>=3.8.0
+
+# PRefLexOR framework (Buehler's inference library)
+PRefLexOR @ git+https://github.com/lamm-mit/PRefLexOR.git
+
+# Utilities
+tqdm>=4.66.0
+pyyaml>=6.0
+
+# Optional: Flash Attention 2 (speeds up inference ~20%, tricky on Windows)
+# Uncomment if you have Visual Studio Build Tools installed:
+# flash-attn --no-build-isolation
