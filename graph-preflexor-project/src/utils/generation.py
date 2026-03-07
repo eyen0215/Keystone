@@ -113,9 +113,17 @@ def generate_response(model, tokenizer, prompt,
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ]
-        input_ids = tokenizer.apply_chat_template(
+        encoded = tokenizer.apply_chat_template(
             messages, return_tensors="pt", add_generation_prompt=True,
-        ).to(model.device)
+        )
+
+        # apply_chat_template may return a BatchEncoding or a plain tensor
+        if hasattr(encoded, "input_ids"):
+            input_ids = encoded.input_ids.to(model.device)
+        elif isinstance(encoded, torch.Tensor):
+            input_ids = encoded.to(model.device)
+        else:
+            input_ids = torch.tensor([encoded]).to(model.device)
 
         with torch.no_grad():
             outputs = model.generate(

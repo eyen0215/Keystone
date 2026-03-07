@@ -19,43 +19,77 @@ def parse_triples(text):
     Extract (source, target, relation) triples from model output text.
 
     Graph-PReFLexOR produces graphs in several formats within <|thinking|>:
-      1. Arrow notation:  "NodeA" -> "NodeB" [label="RELATIONSHIP"]
-      2. Keyword relations: NodeA IS-A NodeB
-      3. Dash notation: NodeA -- RELATIONSHIP --> NodeB
+      1. Bracket-arrow: [Node A] -RELATION-> [Node B]  (most common!)
+      2. Quote-arrow:   "Node A" -> "Node B" [label="REL"]
+      3. Keyword:       Node A IS-A Node B
+      4. Dash notation: Node A -- RELATION --> Node B
+      5. Bare arrow:    Node A -> Node B
 
     Returns:
         list of (source, target, relation) tuples
     """
     triples = []
 
-    # Pattern 1: Arrow-based (most common in Graph-PReFLexOR output)
-    # Handles: "Node A" -> "Node B" [label="REL"]
-    # Handles: Node A -> Node B
-    for m in re.finditer(
-        r'["\']?([^"\'>\n]{2,80}?)["\']?\s*->\s*["\']?([^"\'>\n\[]{2,80}?)["\']?'
-        r'\s*(?:\[label=["\']([^"\']*)["\'])?\s*',
-        text
-    ):
-        src = m.group(1).strip().strip('"\'')
-        tgt = m.group(2).strip().strip('"\'')
-        rel = (m.group(3) or "RELATES-TO").strip()
-        if src and tgt and src != tgt:
-            triples.append((src, tgt, rel))
-
-    # Pattern 2: Named relationships in prose
     RELATIONS = (
         "IS-A|RELATES-TO|INFLUENCES|PART-OF|CAUSES|ENABLES|"
         "INHIBITS|HAS-PROPERTY|DERIVED-FROM|COMPOSED-OF|LEADS-TO"
     )
+
+    # Pattern 1 (PRIMARY): Bracket notation with relation on arrow
+    # Handles: [Node A] -IS-A-> [Node B]
+    # Handles: [Node A] -RELATES-TO-> [Node B]
     for m in re.finditer(
-        rf'["\']?([A-Za-z][A-Za-z\s]{{1,60}}?)["\']?\s+'
-        rf'({RELATIONS})\s+'
-        rf'["\']?([A-Za-z][A-Za-z\s]{{1,60}}?)["\']?\s*$',
+        r'\[([^\]]{2,80}?)\]\s*-\s*(' + RELATIONS + r')\s*->\s*\[([^\]]{2,80}?)\]',
+        text
+    ):
+        triples.append((m.group(1).strip(), m.group(3).strip(), m.group(2).strip()))
+
+    # Pattern 2: Bare bracket arrow (no relation label)
+    # Handles: [Node A] -> [Node B]
+    for m in re.finditer(
+        r'\[([^\]]{2,80}?)\]\s*-?>\s*\[([^\]]{2,80}?)\]',
+        text
+    ):
+        src, tgt = m.group(1).strip(), m.group(2).strip()
+        if src and tgt and src != tgt:
+            # Check if we already captured this with a relation
+            if not any(t[0] == src and t[1] == tgt for t in triples):
+                triples.append((src, tgt, "RELATES-TO"))
+
+    # Pattern 3: Quote-arrow with optional label
+    # Handles: "Node A" -> "Node B" [label="REL"]
+    for m in re.finditer(
+        r'["\']([^"\']{2,80}?)["\']\s*->\s*["\']([^"\']{2,80}?)["\']'
+        r'\s*(?:\[label=["\']([^"\']*)["\'])?\s*',
+        text
+    ):
+        src = m.group(1).strip()
+        tgt = m.group(2).strip()
+        rel = (m.group(3) or "RELATES-TO").strip()
+        if src and tgt and src != tgt:
+            triples.append((src, tgt, rel))
+
+    # Pattern 4: Keyword relationships without brackets (prose style)
+    # Handles: Strength -INFLUENCES-> [Mechanical Performance]
+    # Handles: Spider Silk RELATES-TO Tough Composite Materials
+    for m in re.finditer(
+        rf'["\'\[]?([A-Za-z][A-Za-z\s]{{1,60}}?)["\'\]]?\s+'
+        rf'-?({RELATIONS})-?>\s*'
+        rf'["\'\[]?([A-Za-z][A-Za-z\s]{{1,60}}?)["\'\]]?\s*$',
         text, re.MULTILINE
     ):
         triples.append((m.group(1).strip(), m.group(3).strip(), m.group(2).strip()))
 
-    # Pattern 3: Dash notation
+    # Pattern 5: Keyword relationships in plain text (no arrows)
+    for m in re.finditer(
+        rf'^[*\-\s]*["\'\[]?([A-Za-z][A-Za-z\s]{{1,60}}?)["\'\]]?\s+'
+        rf'({RELATIONS})\s+'
+        rf'["\'\[]?([A-Za-z][A-Za-z\s]{{1,60}}?)["\'\]]?\s*$',
+        text, re.MULTILINE
+    ):
+        triples.append((m.group(1).strip(), m.group(3).strip(), m.group(2).strip()))
+
+    # Pattern 6: Dash notation
     for m in re.finditer(
         r'([A-Za-z][A-Za-z\s]{1,60}?)\s*--\s*([A-Z_-]+)\s*-->\s*([A-Za-z][A-Za-z\s]{1,60})',
         text
