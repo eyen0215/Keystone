@@ -1,11 +1,21 @@
 # Keystone: Consistency-Enforced, Hub-Preserving Graph Reasoning
 
-Research project extending [Buehler (2025)](https://arxiv.org/abs/2501.08120)'s Graph-PReFLexOR framework with:
-- **Constraint Auditing Layers** — trajectory-level validation to detect semantic drift
-- **Recursive Saliency Pruning** — structure-aware sparsification for emergent knowledge graphs
+Keystone extends [Buehler (2025)](https://arxiv.org/abs/2501.08120)'s Graph-PReFLexOR
+framework to keep iterative reasoning graphs logically coherent as they grow — pruning
+aggressively while protecting the load-bearing ("keystone") hub nodes that hold the
+structure together.
 
-Built on the [Graph-PReFLexOR](https://huggingface.co/lamm-mit/Graph-Preflexor_01062025) model (3B params, fine-tuned Llama 3.2-3B-Instruct).
+**Two additions over the base framework:**
+- **Constraint Auditing Layers** — trajectory-level validation that detects semantic
+  drift across reasoning cycles, quantified via a *logical-entropy* coherence metric.
+- **Recursive Saliency Pruning** — structure-aware sparsification for emergent knowledge
+  graphs that preserves high-centrality nodes.
 
+Built on the [Graph-PReFLexOR](https://huggingface.co/lamm-mit/Graph-Preflexor_01062025)
+model (3B params, fine-tuned Llama 3.2-3B-Instruct).
+
+**Status:** Architecture prototyped; baseline graph-growth reproduction working.
+Constraint-auditing + logical-entropy evaluation in progress — no held-out results yet.
 ## Quick Start
 
 ### Prerequisites
@@ -17,7 +27,7 @@ Built on the [Graph-PReFLexOR](https://huggingface.co/lamm-mit/Graph-Preflexor_0
 
 ```bash
 # 1. Clone this repo
-git clone https://github.com/<your-username>/graph-preflexor-project.git
+git clone https://github.com/eyen0215/graph-preflexor-project.git
 cd graph-preflexor-project
 
 # 2. Create virtual environment
