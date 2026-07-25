@@ -1,4 +1,4 @@
-# Graph-PReFLexOR: Constraint Auditing & Recursive Saliency Pruning
+# Keystone: Consistency-Enforced, Hub-Preserving Graph Reasoning
 
 Research project extending [Buehler (2025)](https://arxiv.org/abs/2501.08120)'s Graph-PReFLexOR framework with:
 - **Constraint Auditing Layers** — trajectory-level validation to detect semantic drift
